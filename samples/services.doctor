@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# ID=$1
+# MSG=$2
+# CMD=$3
+# LEVEL=$4
+# SUGGEST=$5
+# GROUP=$6
+
+services=('httpd' 'crond')
+for i in ${services[*]}
+do
+  add_check \
+  "service_$i" \
+   "Service $i" \
+  "/etc/init.d/$i status" \
+  "ERROR" \
+  "stopped" \
+  "services"
+done

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# ID=$1
+# MSG=$2
+# CMD=$3
+# LEVEL=$4
+# SUGGEST=$5
+# GROUP=$6
+
+add_check \
+"google_it" \
+"Google.fr is reachable" \
+"curl http://google.fr --silent --max-time 5" \
+"WARNING" \
+"NA" \
+"networking"

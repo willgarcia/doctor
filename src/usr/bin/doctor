@@ -1,0 +1,205 @@
+#!/bin/bash
+
+ENV=prod
+ME=$(whoami)
+ACTION="start"
+
+declare -A CHECKS
+
+QUERY=""
+
+PASSED=0
+FAILED=0
+WARNINGS=0
+TOTAL=0
+
+function help() {
+
+  echo -e "$0 [-q query] [-l] [-h]"
+  echo
+  echo -e "  -l List existing checks"
+  echo
+  echo -e "  -q Query mode"
+  echo -e "     Values: grep rule for check filtering"
+  echo -e "     Default: All checks"
+}
+
+function error() {
+  echo -e "\033[0;31mERROR : $@\033[0m " 1>&2
+}
+
+function log() {
+  echo -e "\033[0;36m$@\033[0m"
+}
+
+#$1 : id
+#$2 : message
+#$3 : commande
+#$4 : level
+#$5 : suggestion
+#$6 : group
+function add_check() {
+  
+  local ID=$1
+  local MSG=$2
+  local CMD=$3
+  local LEVEL=$4
+  local SUGGEST=$5
+  local GROUP=$6
+
+  CHECKS[$ID:command]=$CMD
+  CHECKS[$ID:message]=$MSG
+  CHECKS[$ID:suggest]=$SUGGEST
+  CHECKS[$ID:group]=$GROUP
+  CHECKS[$ID:level]=$LEVEL
+}
+
+function get_check_ids() {
+  (
+    for i in "${!CHECKS[@]}"
+    do
+      echo "$i"
+    done
+  ) | awk -F':' '{print $1}' | sort -u
+}
+
+#$1 (string) id
+#$2 (int) group level
+function get_level_group() {
+  local id=$1
+  local lvl=$2
+  
+  [[ -z $id ]] && return 1
+  [[ -z $lvl ]] && lvl=1
+ 
+  local return_group=""
+  IFS='_'
+  local i=0
+  for group in $id
+  do
+    ((i++))
+    [ $i = $lvl ] && return_group=$group
+  done
+  #if last, is not a group but ID
+  [[ $i == $lvl ]] || echo $return_group && return 0
+  return 1
+}
+
+function start_checks() {
+  echo "["
+
+  local IFS=$'\n'
+  for id in $(get_check_ids); do
+    (( TOTAL++ ))
+    [ $TOTAL -gt 1 ] && echo ','
+    check "$id" "${CHECKS[$id:message]}" "${CHECKS[$id:command]}" "${CHECKS[$id:level]}" "${CHECKS[$id:suggest]}"  "${CHECKS[$id:group]}"
+  done
+  echo "]"
+}
+
+#Usage: check <message> <suggestion> <command>
+#
+#  message       Message décrivant le check
+#  suggestion    Commande suggérée pour corriger l'erreur
+#  command       Commande lancée lors du check
+#
+#  Valeurs de retour :
+#    0    Aucune erreur détectée
+#    1    Une erreur a été détectée
+function check() {
+  local ID=$1
+  local MSG=$2
+  local CMD=$3
+  local LEVEL=$4
+  local SUGGEST=$5
+  local GROUP=$6
+  local STATUS=
+
+  OUTPUT=$(echo $CMD | bash)
+
+  [[ $? != 0 ]] && STATUS='fail' || STATUS='success'
+
+  SANITIZED_CMD=$(printf '%q' $CMD)
+  SANITIZED_CMD=$(tr '\\ ' ' ' <<< "$SANITIZED_CMD")
+  SANITIZED_CMD=$(tr '"' ' ' <<< "$SANITIZED_CMD")
+
+  SANITIZED_OUTPUT=$(printf '%q' $OUTPUT)
+  SANITIZED_OUTPUT=$(tr '\\ ' ' ' <<< "$SANITIZED_OUTPUT")
+  SANITIZED_OUTPUT=$(tr '"' ' ' <<< "$SANITIZED_OUTPUT")
+
+  echo -e "{
+    \"id\": \"$ID\",
+    \"message\": \"$MSG\",
+    \"level\": \"$LEVEL\",
+    \"suggestion\": \"$SUGGEST\",
+    \"status\": \"$STATUS\",
+    \"command\": \"$SANITIZED_CMD\",
+    \"output\": \"$SANITIZED_OUTPUT\",
+    \"group\": \"$GROUP\"
+}"
+
+  if [[ $? != 0 ]];then
+    ((FAILED++))
+    return 1
+  fi
+
+  ((PASSED++))
+  return 0
+}
+
+function summary() {
+  echo
+
+  if [[ $FAILED > 0 || $WARNINGS > 0 ]] && [ ! -z $PS1 ]; then
+    echo
+    echo -e "TOTAL : $TOTAL / \033[0;32mPASS : $PASSED\033[0m / \033[0;33mWARN : $WARNINGS\033[0m / \033[0;31mFAIL : $FAILED\033[0m"
+    log "Consider fixing your errors and run this command:\n$0 $*"
+  fi
+}
+
+while getopts "a:e:hjlq:" optname 2>/dev/null
+do
+  case "$optname" in
+    "h")
+      help
+      exit
+      ;;
+    "l")
+      ACTION='list'
+      ;;
+    "q")
+      QUERY=$OPTARG
+      ;;
+    "?")
+      error "Unknown option $1\n"
+      help
+      exit 1
+      ;;
+    ":")
+      error "No argument value for option $OPTARG\n"
+      help
+      exit 1
+      ;;
+    *)
+      error "Unknown error while processing options\n"
+      help
+      exit 1
+    ;;
+
+  esac
+done
+
+CONF="/etc/doctor/conf.d/"
+ANALYZES=$(ls "${CONF}")
+for ANALYZE in ${ANALYZES}; do
+    . "${CONF}/${ANALYZE}"
+done
+
+if [[ "$ACTION" == "start" ]]; then
+  start_checks
+  [[ ! -z $PS1 ]] && summary
+elif [[ "$ACTION" == "list" ]]; then
+  get_check_ids
+fi
+
+exit $FAILED

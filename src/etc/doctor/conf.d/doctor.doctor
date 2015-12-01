@@ -1,0 +1,9 @@
+#!/bin/bash
+
+add_check \
+"uptime_last_update" \
+"Uptime" \
+"date '+%Y-%m-%d %H:%M:%S' -d \"`cut -f1 -d. /proc/uptime` seconds ago\"" \
+"INFO" \
+"NA" \
+"system"

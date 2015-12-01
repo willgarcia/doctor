@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# ID=$1
+# MSG=$2
+# CMD=$3
+# LEVEL=$4
+# SUGGEST=$5
+# GROUP=$6
+
+add_check \
+"hostname_check" \
+"Hostname check" \
+"ping -c 1 $(hostname)" \
+"WARNING" \
+"hostname_undefined" \
+"networking"

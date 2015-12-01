@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# ID=$1
+# MSG=$2
+# CMD=$3
+# LEVEL=$4
+# SUGGEST=$5
+# GROUP=$6
+
+add_check \
+"my_file_check" \
+"My file exists" \
+"test -d /my/file" \
+"ERROR" \
+"error" \
+"application"
