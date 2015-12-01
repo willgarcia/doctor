@@ -6,7 +6,7 @@ Doctor can be used:
 * to detect potential issues on a server / in combination with alert monitoring tools
 * for analysis purposes: eg. in a webapp to display the server services' statuses via the JSON output
 
-My special thanks to [Julien Bianchi](https://twitter.com/jubianchi) for his original idea and write-up of Doctor.
+My special thanks to [Julien Bianchi](https://github.com/jubianchi) for his original idea and write-up of Doctor.
 At first, Julien has imagined this tool to guide/help the developers to investigate environment problems on their local VM setups.
 
 Following the same idea, I have refactored the code in order to extend the system and suit new needs/options.
@@ -22,7 +22,7 @@ Doctor provides:
 $ ./build.sh
 ```
 
-From here, the generated is available in `rpmbuild/RPMS/x86_64`.
+From here, the generated RPM is available in `rpmbuild/RPMS/x86_64`.
 
 ## Installation
 
