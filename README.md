@@ -74,7 +74,7 @@ add_check \
 ```
 
 See examples here:
-* [File check](samples/files.doctor)
+* [File check](samples/file.doctor)
 * [Hostname check](samples/hostname.doctor)
 * [HTTP check](samples/http.doctor)
 * [Service check](samples/services.doctor)
