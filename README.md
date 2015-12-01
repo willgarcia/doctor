@@ -14,7 +14,7 @@ Following the same idea, I have refactored the code in order to extend the syste
 Doctor provides:
 * a configurable way to define what is called a "check" - see [configuration](#configuration);
 * a JSON output;
-* a RPM package via via [PackageCloud.io](https://packagecloud.io/willgarcia/doctor).
+* a RPM package via [PackageCloud.io](https://packagecloud.io/willgarcia/doctor).
 
 ## RPM Build (optional)
 
